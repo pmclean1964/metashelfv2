@@ -667,6 +667,183 @@
   .fc-orchestral       { color: #e8d5a3; }
   .fc-industrial       { color: #a0a0a0; }
 
+  /* ── UPLOAD TRIGGER BUTTON ── */
+  .upload-trigger-btn {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.72rem;
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .upload-trigger-btn:hover { background: #ff5a5a; border-color: #ff5a5a; }
+
+  /* ── UPLOAD MODAL INTERNALS ── */
+  .upload-dropzone {
+    border: 2px dashed var(--border2);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--surface2);
+  }
+  .upload-dropzone.dragover {
+    border-color: var(--accent);
+    background: rgba(232,69,69,0.06);
+  }
+  .upload-drop-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.6rem;
+    opacity: 0.4;
+  }
+  .upload-drop-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .upload-drop-sub {
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .upload-browse-btn {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    font-family: var(--font-head);
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .upload-browse-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* file list */
+  .upload-file-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+  }
+  .upload-file-icon { font-size: 1rem; flex-shrink: 0; }
+  .upload-file-name { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .upload-file-size { color: var(--muted); flex-shrink: 0; }
+  .upload-file-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0 0.2rem;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .upload-file-remove:hover { color: var(--accent); }
+
+  /* metadata fields */
+  .upload-fields { display: flex; flex-direction: column; gap: 0.7rem; }
+  .upload-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .upload-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .upload-field-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+  .upload-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .upload-input:focus { border-color: var(--accent); }
+  .upload-input::placeholder { color: var(--muted); }
+  .upload-input option { background: var(--surface2); }
+  .upload-textarea { resize: vertical; min-height: 68px; }
+
+  /* progress rows */
+  .upload-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+  }
+  .upload-progress-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .upload-progress-status { flex-shrink: 0; font-weight: 700; }
+  .upload-progress-status.pending  { color: var(--muted); }
+  .upload-progress-status.uploading { color: var(--gold); }
+  .upload-progress-status.done     { color: var(--green); }
+  .upload-progress-status.error    { color: var(--accent); }
+
+  /* actions bar */
+  .upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .upload-cancel-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-family: var(--font-head);
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .upload-cancel-btn:hover { border-color: var(--border2); color: var(--text); }
+  .upload-submit-btn {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.75rem;
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .upload-submit-btn:hover { background: #ff5a5a; }
+  .upload-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
   /* scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -694,6 +871,7 @@
     <div class="stat-pill" id="totalStat">Loading...</div>
     <div class="stat-pill" id="audioStat">— audio</div>
     <div class="stat-pill" id="imageStat">— art</div>
+    <button class="upload-trigger-btn" id="openUploadBtn">⬆ Upload</button>
   </div>
 </header>
 
@@ -725,6 +903,96 @@
 
   <!-- PAGINATION -->
   <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadOverlay">
+  <div class="modal" id="uploadModal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Upload Media</div>
+        <div class="modal-artist">Add files from external sources to Metashelf</div>
+      </div>
+      <button class="modal-close" id="uploadClose">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Drop zone -->
+      <div class="upload-dropzone" id="uploadDropzone">
+        <div class="upload-drop-icon">⬆</div>
+        <div class="upload-drop-label">Drop audio or image files here</div>
+        <div class="upload-drop-sub">MP3, WAV, FLAC, AAC, OGG · JPG, PNG, WEBP</div>
+        <label class="upload-browse-btn">
+          Browse files
+          <input type="file" id="uploadFileInput" accept="audio/*,image/*" multiple style="display:none">
+        </label>
+      </div>
+
+      <!-- File queue -->
+      <div id="uploadQueue" style="display:none">
+        <div class="modal-section-label" style="margin-top:1.2rem">Files to upload</div>
+        <div id="uploadFileList"></div>
+      </div>
+
+      <!-- Metadata fields -->
+      <div id="uploadMeta" style="display:none">
+        <div class="modal-section-label" style="margin-top:1.2rem">Metadata <span style="font-size:0.6rem;color:var(--muted)">(applied to all files)</span></div>
+        <div class="upload-fields">
+          <div class="upload-field-row">
+            <div class="upload-field">
+              <label class="upload-field-label">Artist</label>
+              <input class="upload-input" type="text" id="upArtist" placeholder="Artist name">
+            </div>
+            <div class="upload-field">
+              <label class="upload-field-label">Family / Genre</label>
+              <select class="upload-input" id="upFamily">
+                <option value="">— select —</option>
+                <option value="folk-country">🪕 Folk & Country</option>
+                <option value="rnb-soul">🎵 R&B & Soul</option>
+                <option value="jazz">🎷 Jazz</option>
+                <option value="hiphop">🎤 Hip-Hop</option>
+                <option value="electronic-dance">🎛️ Electronic Dance</option>
+                <option value="electronic-hard">⚡ Electronic Hard</option>
+                <option value="electronic-soft">🌊 Electronic Soft</option>
+                <option value="experimental">🔬 Experimental</option>
+                <option value="rock-indie">🎸 Rock & Indie</option>
+                <option value="world">🌍 World</option>
+                <option value="orchestral">🎻 Orchestral</option>
+                <option value="industrial">⚙️ Industrial</option>
+              </select>
+            </div>
+          </div>
+          <div class="upload-field-row">
+            <div class="upload-field">
+              <label class="upload-field-label">Source / Service</label>
+              <input class="upload-input" type="text" id="upSource" placeholder="e.g. Spotify, Bandcamp">
+            </div>
+            <div class="upload-field">
+              <label class="upload-field-label">Tags <span style="font-weight:400;opacity:.6">(comma separated)</span></label>
+              <input class="upload-input" type="text" id="upTags" placeholder="dark, cinematic, 120bpm">
+            </div>
+          </div>
+          <div class="upload-field">
+            <label class="upload-field-label">Description / Concept</label>
+            <textarea class="upload-input upload-textarea" id="upConcept" placeholder="Optional notes about this track or image…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress / status -->
+      <div id="uploadProgress" style="display:none">
+        <div class="modal-section-label" style="margin-top:1.2rem">Progress</div>
+        <div id="uploadProgressList"></div>
+      </div>
+
+      <!-- Actions -->
+      <div id="uploadActions" class="upload-actions" style="display:none">
+        <button class="upload-cancel-btn" id="uploadClearBtn">✕ Clear</button>
+        <button class="upload-submit-btn" id="uploadSubmitBtn">⬆ Upload all</button>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -1189,6 +1457,196 @@ function formatBytes(b) {
   if (b < 1024*1024) return (b/1024).toFixed(0) + ' KB';
   return (b/1024/1024).toFixed(1) + ' MB';
 }
+
+// ── UPLOAD ────────────────────────────────────────────────
+let uploadFiles = [];
+
+const uploadOverlay   = document.getElementById('uploadOverlay');
+const uploadDropzone  = document.getElementById('uploadDropzone');
+const uploadFileInput = document.getElementById('uploadFileInput');
+const uploadQueue     = document.getElementById('uploadQueue');
+const uploadFileList  = document.getElementById('uploadFileList');
+const uploadMeta      = document.getElementById('uploadMeta');
+const uploadProgress  = document.getElementById('uploadProgress');
+const uploadProgressList = document.getElementById('uploadProgressList');
+const uploadActions   = document.getElementById('uploadActions');
+const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
+
+document.getElementById('openUploadBtn').addEventListener('click', () => {
+  uploadOverlay.classList.add('open');
+});
+document.getElementById('uploadClose').addEventListener('click', closeUploadModal);
+uploadOverlay.addEventListener('click', (e) => {
+  if (e.target === uploadOverlay) closeUploadModal();
+});
+
+function closeUploadModal() {
+  uploadOverlay.classList.remove('open');
+  resetUpload();
+}
+
+function resetUpload() {
+  uploadFiles = [];
+  uploadFileInput.value = '';
+  uploadQueue.style.display     = 'none';
+  uploadMeta.style.display      = 'none';
+  uploadProgress.style.display  = 'none';
+  uploadActions.style.display   = 'none';
+  uploadFileList.innerHTML      = '';
+  uploadProgressList.innerHTML  = '';
+  uploadSubmitBtn.disabled      = false;
+  uploadSubmitBtn.textContent   = '⬆ Upload all';
+  uploadDropzone.style.display  = '';
+  // clear meta fields
+  ['upArtist','upFamily','upSource','upTags','upConcept'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// Drag & drop on dropzone
+uploadDropzone.addEventListener('dragover', (e) => { e.preventDefault(); uploadDropzone.classList.add('dragover'); });
+uploadDropzone.addEventListener('dragleave', () => uploadDropzone.classList.remove('dragover'));
+uploadDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadDropzone.classList.remove('dragover');
+  addFiles([...e.dataTransfer.files]);
+});
+uploadDropzone.addEventListener('click', (e) => {
+  if (e.target !== uploadFileInput) uploadFileInput.click();
+});
+uploadFileInput.addEventListener('change', () => addFiles([...uploadFileInput.files]));
+
+function addFiles(files) {
+  const allowed = /^(audio|image)\//;
+  files.forEach(f => {
+    if (!allowed.test(f.type)) return;
+    if (uploadFiles.find(x => x.name === f.name && x.size === f.size)) return;
+    uploadFiles.push(f);
+  });
+  renderFileQueue();
+}
+
+function renderFileQueue() {
+  if (!uploadFiles.length) { resetUpload(); return; }
+
+  uploadDropzone.style.display = 'none';
+  uploadQueue.style.display    = '';
+  uploadMeta.style.display     = '';
+  uploadActions.style.display  = '';
+  uploadProgress.style.display = 'none';
+
+  uploadFileList.innerHTML = uploadFiles.map((f, i) => `
+    <div class="upload-file-item">
+      <span class="upload-file-icon">${f.type.startsWith('audio') ? '♫' : '◻'}</span>
+      <span class="upload-file-name" title="${f.name}">${f.name}</span>
+      <span class="upload-file-size">${formatBytes(f.size)}</span>
+      <button class="upload-file-remove" onclick="removeUploadFile(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeUploadFile(i) {
+  uploadFiles.splice(i, 1);
+  renderFileQueue();
+}
+
+document.getElementById('uploadClearBtn').addEventListener('click', () => {
+  uploadDropzone.style.display = '';
+  resetUpload();
+});
+
+uploadSubmitBtn.addEventListener('click', async () => {
+  if (!uploadFiles.length) return;
+
+  // gather metadata
+  const artist  = document.getElementById('upArtist').value.trim();
+  const family  = document.getElementById('upFamily').value;
+  const source  = document.getElementById('upSource').value.trim();
+  const tagsRaw = document.getElementById('upTags').value.trim();
+  const concept = document.getElementById('upConcept').value.trim();
+  const tags    = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+  // switch to progress view
+  uploadQueue.style.display   = 'none';
+  uploadMeta.style.display    = 'none';
+  uploadProgress.style.display = '';
+  uploadSubmitBtn.disabled    = true;
+  uploadSubmitBtn.textContent = 'Uploading…';
+
+  const items = uploadFiles.map(f => ({ file: f, status: 'pending' }));
+
+  function renderProgress() {
+    uploadProgressList.innerHTML = items.map(item => `
+      <div class="upload-progress-item">
+        <span class="upload-file-icon">${item.file.type.startsWith('audio') ? '♫' : '◻'}</span>
+        <span class="upload-progress-name">${item.file.name}</span>
+        <span class="upload-progress-status ${item.status}">${
+          item.status === 'pending'   ? '···' :
+          item.status === 'uploading' ? '↑ Uploading' :
+          item.status === 'done'      ? '✓ Done' :
+          `✕ ${item.error || 'Failed'}`
+        }</span>
+      </div>
+    `).join('');
+  }
+
+  renderProgress();
+
+  for (const item of items) {
+    item.status = 'uploading';
+    renderProgress();
+
+    try {
+      const fd = new FormData();
+      fd.append('file', item.file);
+
+      // derive title from filename (strip extension)
+      const title = item.file.name.replace(/\.[^.]+$/, '');
+      fd.append('title', title);
+
+      // mediaType from MIME
+      const mediaType = item.file.type.startsWith('audio') ? 'AUDIO' : 'IMAGE';
+      fd.append('mediaType', mediaType);
+
+      // optional metadata as JSON
+      const meta = {};
+      if (artist)  meta.artist  = artist;
+      if (family)  meta.family  = family;
+      if (source)  meta.source  = source;
+      if (concept) meta.concept = concept;
+      if (Object.keys(meta).length) fd.append('metadata', JSON.stringify(meta));
+
+      if (tags.length) fd.append('tags', JSON.stringify(tags));
+
+      const res = await fetch(`${API}/api/media`, { method: 'POST', body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || `HTTP ${res.status}`);
+      }
+
+      item.status = 'done';
+    } catch (err) {
+      item.status = 'error';
+      item.error  = err.message;
+    }
+
+    renderProgress();
+  }
+
+  const allDone  = items.every(i => i.status === 'done');
+  const anyDone  = items.some(i  => i.status === 'done');
+
+  uploadSubmitBtn.disabled    = false;
+  uploadSubmitBtn.textContent = allDone ? '✓ Done — Close' : 'Close';
+  uploadSubmitBtn.onclick = () => {
+    closeUploadModal();
+    if (anyDone) { fetchStats(); render(); }
+  };
+
+  uploadActions.style.display = '';
+  document.getElementById('uploadClearBtn').style.display = 'none';
+});
 
 // ── INIT ──────────────────────────────────────────────────
 fetchStats();

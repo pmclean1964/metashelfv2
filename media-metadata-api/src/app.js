@@ -104,7 +104,7 @@ function createApp() {
   const app = express();
 
   // ── Security & utility middleware ──────────────────────────────────────────
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
   app.use(cors());
   app.use(compression());
   app.use(express.json({ limit: '1mb' }));
@@ -120,6 +120,8 @@ function createApp() {
 
   // ── Static assets ──────────────────────────────────────────────────────────
   app.use('/logo.png', express.static(path.join(__dirname, '../uploads/logo.png')));
+  app.use('/browser', express.static(path.join(__dirname, '../uploads')));
+  app.get('/browser', (req, res) => res.sendFile(path.join(__dirname, '../uploads/starcast-media-browser.html')));
 
   // ── Routes ─────────────────────────────────────────────────────────────────
   app.use('/health', healthRoutes);

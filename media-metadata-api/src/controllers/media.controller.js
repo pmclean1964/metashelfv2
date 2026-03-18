@@ -96,8 +96,10 @@ async function upload(req, res) {
 
   // Merge ID3 → body, with user-supplied values always winning
   if (id3) {
-    // Title: use user value if provided, else ID3
-    if (!req.body.title && id3.title) {
+    // Title: ID3 wins over filename fallback; only a user-typed title overrides ID3.
+    // The route middleware sets a filename fallback so the validator passes,
+    // but we always replace that with the real ID3 title when available.
+    if (id3.title) {
       req.body.title = id3.title;
     }
 
@@ -107,11 +109,13 @@ async function upload(req, res) {
     }
 
     // Merge into metadata object — user values win
+    // Build metadata: ID3 as base, user-supplied values override
     const id3Meta = {};
-    if (id3.artist && !userMeta.artist)  id3Meta.artist = id3.artist;
-    if (id3.album  && !userMeta.album)   id3Meta.album  = id3.album;
-    if (id3.lyrics && !userMeta.lyrics)  id3Meta.lyrics = id3.lyrics;
+    if (id3.artist) id3Meta.artist = id3.artist;
+    if (id3.album)  id3Meta.album  = id3.album;
+    if (id3.lyrics) id3Meta.lyrics = id3.lyrics;
 
+    // userMeta spread last so manual entries always win over ID3
     req.body.metadata = JSON.stringify({ ...id3Meta, ...userMeta });
   }
 

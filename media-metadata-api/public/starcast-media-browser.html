@@ -844,6 +844,28 @@
   .upload-submit-btn:hover { background: #ff5a5a; }
   .upload-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+  /* ── COVER ART TABS ── */
+  .art-section { margin-top: 0.5rem; }
+  .art-tabs { display: flex; gap: 0.3rem; margin-bottom: 0.9rem; }
+  .art-tab { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.68rem; font-family: var(--font-head); font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .art-tab:hover { border-color: var(--border2); color: var(--text); }
+  .art-tab.active { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+  .art-hint { font-size: 0.73rem; font-family: var(--font-mono); color: var(--muted); padding: 0.7rem 0; }
+  .art-upload-zone { border: 2px dashed var(--border2); border-radius: 10px; background: var(--surface2); padding: 1.4rem; text-align: center; transition: border-color 0.2s; min-height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .art-upload-zone.dragover { border-color: var(--accent); background: rgba(232,69,69,0.05); }
+  .art-preview-wrap { position: relative; text-align: center; width: 100%; }
+  .art-preview-img { max-width: 100%; max-height: 220px; border-radius: 8px; display: block; margin: 0 auto 0.6rem; object-fit: contain; }
+  .art-preview-remove { background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.68rem; font-family: var(--font-mono); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .art-preview-remove:hover { border-color: var(--accent); color: var(--accent); }
+  .comfy-actions { display: flex; align-items: center; gap: 0.8rem; }
+  .comfy-generate-btn { background: var(--purple); border: 1px solid var(--purple); border-radius: 6px; padding: 0.5rem 1.1rem; font-size: 0.75rem; font-family: var(--font-head); font-weight: 700; color: white; cursor: pointer; transition: all 0.15s; }
+  .comfy-generate-btn:hover { background: #b085ff; }
+  .comfy-generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .comfy-status { font-size: 0.7rem; font-family: var(--font-mono); color: var(--muted); }
+  .comfy-status.generating { color: var(--gold); }
+  .comfy-status.done { color: var(--green); }
+  .comfy-status.error { color: var(--accent); }
+
   /* scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -907,7 +929,7 @@
 
 <!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="uploadOverlay">
-  <div class="modal" id="uploadModal" style="max-width:560px">
+  <div class="modal" id="uploadModal" style="max-width:620px">
     <div class="modal-header">
       <div>
         <div class="modal-title">Upload Media</div>
@@ -917,7 +939,7 @@
     </div>
     <div class="modal-body">
 
-      <!-- Drop zone -->
+      <!-- ── STEP 1: Drop zone ── -->
       <div class="upload-dropzone" id="uploadDropzone">
         <div class="upload-drop-icon">⬆</div>
         <div class="upload-drop-label">Drop audio or image files here</div>
@@ -928,15 +950,16 @@
         </label>
       </div>
 
-      <!-- File queue -->
+      <!-- ── STEP 2: File queue + metadata ── -->
       <div id="uploadQueue" style="display:none">
         <div class="modal-section-label" style="margin-top:1.2rem">Files to upload</div>
         <div id="uploadFileList"></div>
       </div>
 
-      <!-- Metadata fields -->
       <div id="uploadMeta" style="display:none">
-        <div class="modal-section-label" style="margin-top:1.2rem">Metadata <span style="font-size:0.6rem;color:var(--muted)">(applied to all files)</span></div>
+
+        <!-- Core metadata -->
+        <div class="modal-section-label" style="margin-top:1.4rem">Metadata <span style="font-size:0.6rem;color:var(--muted);text-transform:none;letter-spacing:0">(applied to all files)</span></div>
         <div class="upload-fields">
           <div class="upload-field-row">
             <div class="upload-field">
@@ -965,7 +988,7 @@
           <div class="upload-field-row">
             <div class="upload-field">
               <label class="upload-field-label">Source / Service</label>
-              <input class="upload-input" type="text" id="upSource" placeholder="e.g. Spotify, Bandcamp">
+              <input class="upload-input" type="text" id="upSource" placeholder="e.g. Suno, Bandcamp, Heartmula">
             </div>
             <div class="upload-field">
               <label class="upload-field-label">Tags <span style="font-weight:400;opacity:.6">(comma separated)</span></label>
@@ -977,9 +1000,75 @@
             <textarea class="upload-input upload-textarea" id="upConcept" placeholder="Optional notes about this track or image…"></textarea>
           </div>
         </div>
-      </div>
 
-      <!-- Progress / status -->
+        <!-- ── COVER ART section ── -->
+        <div class="modal-section-label" style="margin-top:1.6rem">Cover Art</div>
+        <div class="art-section">
+          <!-- Art mode tabs -->
+          <div class="art-tabs">
+            <button class="art-tab active" data-art="none">No art</button>
+            <button class="art-tab" data-art="upload">Upload file</button>
+            <button class="art-tab" data-art="comfy">Generate with ComfyUI</button>
+          </div>
+
+          <!-- None -->
+          <div class="art-panel" id="artPanel-none">
+            <p class="art-hint">Track will appear without cover art. You can add it later via the detail view.</p>
+          </div>
+
+          <!-- Upload art file -->
+          <div class="art-panel" id="artPanel-upload" style="display:none">
+            <div class="art-upload-zone" id="artDropzone">
+              <div class="art-preview-wrap" id="artPreviewWrap" style="display:none">
+                <img id="artPreviewImg" class="art-preview-img" alt="cover preview">
+                <button class="art-preview-remove" id="artPreviewRemove">✕ Remove</button>
+              </div>
+              <div id="artDropPrompt">
+                <div class="upload-drop-icon" style="font-size:1.4rem;margin-bottom:0.4rem">◻</div>
+                <div style="font-size:0.78rem;color:var(--text);margin-bottom:0.3rem">Drop image here or browse</div>
+                <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.8rem">JPG, PNG, WEBP — square recommended</div>
+                <label class="upload-browse-btn" style="font-size:0.7rem;padding:0.3rem 0.8rem">
+                  Browse
+                  <input type="file" id="artFileInput" accept="image/*" style="display:none">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ComfyUI generation -->
+          <div class="art-panel" id="artPanel-comfy" style="display:none">
+            <div class="upload-field" style="margin-bottom:0.7rem">
+              <label class="upload-field-label">ComfyUI Host</label>
+              <input class="upload-input" type="text" id="comfyHost" value="http://192.168.68.126:8000" placeholder="http://host:8188">
+            </div>
+            <div class="upload-field" style="margin-bottom:0.7rem">
+              <label class="upload-field-label">Image Prompt</label>
+              <textarea class="upload-input upload-textarea" id="comfyPrompt" placeholder="Album art for a dark cinematic electronic track, moody lighting, abstract…" style="min-height:72px"></textarea>
+            </div>
+            <div class="upload-field" style="margin-bottom:0.9rem">
+              <label class="upload-field-label">Negative Prompt <span style="font-weight:400;opacity:.6">(optional)</span></label>
+              <input class="upload-input" type="text" id="comfyNegative" placeholder="text, watermark, blurry, low quality">
+            </div>
+            <div class="comfy-actions">
+              <button class="comfy-generate-btn" id="comfyGenerateBtn">✦ Generate</button>
+              <span class="comfy-status" id="comfyStatus"></span>
+            </div>
+            <div class="art-preview-wrap" id="comfyPreviewWrap" style="display:none;margin-top:0.9rem">
+              <img id="comfyPreviewImg" class="art-preview-img" alt="generated art">
+              <button class="art-preview-remove" id="comfyPreviewRemove">✕ Discard</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── LYRICS section ── -->
+        <div class="modal-section-label" style="margin-top:1.6rem">Lyrics <span style="font-size:0.6rem;color:var(--muted);text-transform:none;letter-spacing:0">(audio only — from Suno, Heartmula, or manual)</span></div>
+        <div class="upload-field">
+          <textarea class="upload-input upload-textarea" id="upLyrics" placeholder="Paste lyrics here, or leave blank…" style="min-height:110px;font-size:0.73rem;line-height:1.7"></textarea>
+        </div>
+
+      </div><!-- /uploadMeta -->
+
+      <!-- ── STEP 3: Progress ── -->
       <div id="uploadProgress" style="display:none">
         <div class="modal-section-label" style="margin-top:1.2rem">Progress</div>
         <div id="uploadProgressList"></div>
@@ -1011,6 +1100,7 @@
 
 <script>
 const API = 'http://192.168.68.138:3000';
+const COMFY_URL = 'http://192.168.68.126:8000';
 const PAGE_SIZE = 24;
 
 let state = {
@@ -1459,26 +1549,27 @@ function formatBytes(b) {
 }
 
 // ── UPLOAD ────────────────────────────────────────────────
-let uploadFiles = [];
+let uploadFiles  = [];
+let artMode      = 'none';   // 'none' | 'upload' | 'comfy'
+let artFile      = null;     // File object for uploaded art
+let comfyArtBlob = null;     // Blob from ComfyUI generation
 
-const uploadOverlay   = document.getElementById('uploadOverlay');
-const uploadDropzone  = document.getElementById('uploadDropzone');
-const uploadFileInput = document.getElementById('uploadFileInput');
-const uploadQueue     = document.getElementById('uploadQueue');
-const uploadFileList  = document.getElementById('uploadFileList');
-const uploadMeta      = document.getElementById('uploadMeta');
-const uploadProgress  = document.getElementById('uploadProgress');
+// DOM refs
+const uploadOverlay      = document.getElementById('uploadOverlay');
+const uploadDropzone     = document.getElementById('uploadDropzone');
+const uploadFileInput    = document.getElementById('uploadFileInput');
+const uploadQueue        = document.getElementById('uploadQueue');
+const uploadFileList     = document.getElementById('uploadFileList');
+const uploadMeta         = document.getElementById('uploadMeta');
+const uploadProgress     = document.getElementById('uploadProgress');
 const uploadProgressList = document.getElementById('uploadProgressList');
-const uploadActions   = document.getElementById('uploadActions');
-const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
+const uploadActions      = document.getElementById('uploadActions');
+const uploadSubmitBtn    = document.getElementById('uploadSubmitBtn');
 
-document.getElementById('openUploadBtn').addEventListener('click', () => {
-  uploadOverlay.classList.add('open');
-});
+// ── Modal open / close ──
+document.getElementById('openUploadBtn').addEventListener('click', () => uploadOverlay.classList.add('open'));
 document.getElementById('uploadClose').addEventListener('click', closeUploadModal);
-uploadOverlay.addEventListener('click', (e) => {
-  if (e.target === uploadOverlay) closeUploadModal();
-});
+uploadOverlay.addEventListener('click', (e) => { if (e.target === uploadOverlay) closeUploadModal(); });
 
 function closeUploadModal() {
   uploadOverlay.classList.remove('open');
@@ -1486,35 +1577,48 @@ function closeUploadModal() {
 }
 
 function resetUpload() {
-  uploadFiles = [];
+  uploadFiles  = [];
+  artFile      = null;
+  comfyArtBlob = null;
+  artMode      = 'none';
   uploadFileInput.value = '';
-  uploadQueue.style.display     = 'none';
-  uploadMeta.style.display      = 'none';
-  uploadProgress.style.display  = 'none';
-  uploadActions.style.display   = 'none';
-  uploadFileList.innerHTML      = '';
-  uploadProgressList.innerHTML  = '';
-  uploadSubmitBtn.disabled      = false;
-  uploadSubmitBtn.textContent   = '⬆ Upload all';
-  uploadDropzone.style.display  = '';
-  // clear meta fields
-  ['upArtist','upFamily','upSource','upTags','upConcept'].forEach(id => {
+
+  uploadQueue.style.display    = 'none';
+  uploadMeta.style.display     = 'none';
+  uploadProgress.style.display = 'none';
+  uploadActions.style.display  = 'none';
+  uploadFileList.innerHTML     = '';
+  uploadProgressList.innerHTML = '';
+  uploadSubmitBtn.disabled     = false;
+  uploadSubmitBtn.textContent  = '⬆ Upload all';
+  uploadSubmitBtn.onclick      = null;
+  uploadDropzone.style.display = '';
+
+  const clearBtn = document.getElementById('uploadClearBtn');
+  if (clearBtn) clearBtn.style.display = '';
+
+  // reset art UI
+  setArtTab('none');
+  resetArtUploadUI();
+  resetComfyUI();
+
+  // clear text fields
+  ['upArtist','upFamily','upSource','upTags','upConcept','upLyrics','comfyPrompt','comfyNegative'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  const hostEl = document.getElementById('comfyHost');
+  if (hostEl) hostEl.value = COMFY_URL;
 }
 
-// Drag & drop on dropzone
+// ── Main file drop / browse ──
 uploadDropzone.addEventListener('dragover', (e) => { e.preventDefault(); uploadDropzone.classList.add('dragover'); });
 uploadDropzone.addEventListener('dragleave', () => uploadDropzone.classList.remove('dragover'));
 uploadDropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadDropzone.classList.remove('dragover');
+  e.preventDefault(); uploadDropzone.classList.remove('dragover');
   addFiles([...e.dataTransfer.files]);
 });
-uploadDropzone.addEventListener('click', (e) => {
-  if (e.target !== uploadFileInput) uploadFileInput.click();
-});
+uploadDropzone.addEventListener('click', (e) => { if (e.target !== uploadFileInput) uploadFileInput.click(); });
 uploadFileInput.addEventListener('change', () => addFiles([...uploadFileInput.files]));
 
 function addFiles(files) {
@@ -1529,7 +1633,6 @@ function addFiles(files) {
 
 function renderFileQueue() {
   if (!uploadFiles.length) { resetUpload(); return; }
-
   uploadDropzone.style.display = 'none';
   uploadQueue.style.display    = '';
   uploadMeta.style.display     = '';
@@ -1556,25 +1659,184 @@ document.getElementById('uploadClearBtn').addEventListener('click', () => {
   resetUpload();
 });
 
+// ── Art tabs ──
+document.querySelectorAll('.art-tab').forEach(btn => {
+  btn.addEventListener('click', () => setArtTab(btn.dataset.art));
+});
+
+function setArtTab(mode) {
+  artMode = mode;
+  document.querySelectorAll('.art-tab').forEach(b => b.classList.toggle('active', b.dataset.art === mode));
+  ['none','upload','comfy'].forEach(m => {
+    const el = document.getElementById(`artPanel-${m}`);
+    if (el) el.style.display = m === mode ? '' : 'none';
+  });
+}
+
+// ── Art file upload (cover art browse/drop) ──
+function resetArtUploadUI() {
+  artFile = null;
+  const wrap   = document.getElementById('artPreviewWrap');
+  const prompt = document.getElementById('artDropPrompt');
+  const img    = document.getElementById('artPreviewImg');
+  const zone   = document.getElementById('artDropzone');
+  if (wrap)   wrap.style.display   = 'none';
+  if (prompt) prompt.style.display = '';
+  if (img)    img.src = '';
+  if (zone)   zone.classList.remove('dragover');
+}
+
+const artDropzone  = document.getElementById('artDropzone');
+const artFileInput = document.getElementById('artFileInput');
+
+artDropzone.addEventListener('dragover', (e) => { e.preventDefault(); artDropzone.classList.add('dragover'); });
+artDropzone.addEventListener('dragleave', () => artDropzone.classList.remove('dragover'));
+artDropzone.addEventListener('drop', (e) => {
+  e.preventDefault(); artDropzone.classList.remove('dragover');
+  const f = [...e.dataTransfer.files].find(f => f.type.startsWith('image/'));
+  if (f) setArtFile(f);
+});
+artDropzone.addEventListener('click', (e) => { if (e.target !== artFileInput) artFileInput.click(); });
+artFileInput.addEventListener('change', () => { if (artFileInput.files[0]) setArtFile(artFileInput.files[0]); });
+
+function setArtFile(f) {
+  artFile = f;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('artPreviewImg').src = e.target.result;
+    document.getElementById('artPreviewWrap').style.display = '';
+    document.getElementById('artDropPrompt').style.display  = 'none';
+  };
+  reader.readAsDataURL(f);
+}
+
+document.getElementById('artPreviewRemove').addEventListener('click', resetArtUploadUI);
+
+// ── ComfyUI generation ──
+function resetComfyUI() {
+  comfyArtBlob = null;
+  const wrap   = document.getElementById('comfyPreviewWrap');
+  const img    = document.getElementById('comfyPreviewImg');
+  const status = document.getElementById('comfyStatus');
+  const btn    = document.getElementById('comfyGenerateBtn');
+  if (wrap)   wrap.style.display = 'none';
+  if (img)    img.src = '';
+  if (status) { status.textContent = ''; status.className = 'comfy-status'; }
+  if (btn)    { btn.disabled = false; btn.textContent = '✦ Generate'; }
+}
+
+document.getElementById('comfyPreviewRemove').addEventListener('click', () => {
+  comfyArtBlob = null;
+  document.getElementById('comfyPreviewWrap').style.display = 'none';
+  document.getElementById('comfyPreviewImg').src = '';
+  const s = document.getElementById('comfyStatus');
+  s.textContent = ''; s.className = 'comfy-status';
+});
+
+document.getElementById('comfyGenerateBtn').addEventListener('click', async () => {
+  const host = (document.getElementById('comfyHost').value.trim() || COMFY_URL).replace(/\/$/, '');
+  const prompt   = document.getElementById('comfyPrompt').value.trim();
+  const negative = document.getElementById('comfyNegative').value.trim();
+  const statusEl = document.getElementById('comfyStatus');
+  const btn      = document.getElementById('comfyGenerateBtn');
+
+  if (!prompt) { statusEl.textContent = 'Enter a prompt first'; statusEl.className = 'comfy-status error'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '…';
+  statusEl.textContent = 'Queueing…';
+  statusEl.className = 'comfy-status generating';
+
+  // Standard ComfyUI txt2img workflow
+  const workflow = {
+    "3": { class_type: "KSampler", inputs: { seed: Math.floor(Math.random()*2**32), steps: 20, cfg: 7, sampler_name: "euler", scheduler: "normal", denoise: 1, model: ["4",0], positive: ["6",0], negative: ["7",0], latent_image: ["5",0] } },
+    "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: "v1-5-pruned-emaonly.ckpt" } },
+    "5": { class_type: "EmptyLatentImage", inputs: { width: 512, height: 512, batch_size: 1 } },
+    "6": { class_type: "CLIPTextEncode", inputs: { text: prompt, clip: ["4",1] } },
+    "7": { class_type: "CLIPTextEncode", inputs: { text: negative || "text, watermark, blurry, low quality, deformed", clip: ["4",1] } },
+    "8": { class_type: "VAEDecode", inputs: { samples: ["3",0], vae: ["4",2] } },
+    "9": { class_type: "SaveImage", inputs: { filename_prefix: "metashelf_art", images: ["8",0] } }
+  };
+
+  try {
+    // Queue prompt
+    const qRes = await fetch(`${host}/prompt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: workflow })
+    });
+    if (!qRes.ok) throw new Error(`ComfyUI queue error: ${qRes.status}`);
+    const { prompt_id } = await qRes.json();
+
+    // Poll history until done
+    statusEl.textContent = 'Generating…';
+    let imgFilename = null;
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      const hRes  = await fetch(`${host}/history/${prompt_id}`);
+      const hist  = await hRes.json();
+      const entry = hist[prompt_id];
+      if (entry?.status?.completed) {
+        const outputs = entry.outputs;
+        for (const nodeId in outputs) {
+          if (outputs[nodeId].images?.length) {
+            imgFilename = outputs[nodeId].images[0];
+            break;
+          }
+        }
+        break;
+      }
+    }
+
+    if (!imgFilename) throw new Error('Timed out waiting for ComfyUI');
+
+    // Fetch the generated image as a blob
+    const imgRes  = await fetch(`${host}/view?filename=${imgFilename.filename}&subfolder=${imgFilename.subfolder || ''}&type=${imgFilename.type || 'output'}`);
+    if (!imgRes.ok) throw new Error('Could not fetch generated image');
+    comfyArtBlob = await imgRes.blob();
+
+    // Show preview
+    const url = URL.createObjectURL(comfyArtBlob);
+    document.getElementById('comfyPreviewImg').src = url;
+    document.getElementById('comfyPreviewWrap').style.display = '';
+    statusEl.textContent = '✓ Ready';
+    statusEl.className   = 'comfy-status done';
+    btn.textContent = '↺ Regenerate';
+    btn.disabled = false;
+
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.className   = 'comfy-status error';
+    btn.textContent = '✦ Generate';
+    btn.disabled = false;
+  }
+});
+
+// ── Submit ──
 uploadSubmitBtn.addEventListener('click', async () => {
   if (!uploadFiles.length) return;
 
-  // gather metadata
   const artist  = document.getElementById('upArtist').value.trim();
   const family  = document.getElementById('upFamily').value;
   const source  = document.getElementById('upSource').value.trim();
   const tagsRaw = document.getElementById('upTags').value.trim();
   const concept = document.getElementById('upConcept').value.trim();
+  const lyrics  = document.getElementById('upLyrics').value.trim();
   const tags    = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-  // switch to progress view
-  uploadQueue.style.display   = 'none';
-  uploadMeta.style.display    = 'none';
-  uploadProgress.style.display = '';
-  uploadSubmitBtn.disabled    = true;
-  uploadSubmitBtn.textContent = 'Uploading…';
+  // Resolve art to upload: prefer comfy blob, then uploaded file
+  const artToUpload = artMode === 'comfy' ? comfyArtBlob
+                    : artMode === 'upload' ? artFile
+                    : null;
 
-  const items = uploadFiles.map(f => ({ file: f, status: 'pending' }));
+  uploadQueue.style.display    = 'none';
+  uploadMeta.style.display     = 'none';
+  uploadProgress.style.display = '';
+  uploadSubmitBtn.disabled     = true;
+  uploadSubmitBtn.textContent  = 'Uploading…';
+
+  // Only audio tracks get lyrics / art; images don't need them
+  const items = uploadFiles.map(f => ({ file: f, status: 'pending', artId: null }));
 
   function renderProgress() {
     uploadProgressList.innerHTML = items.map(item => `
@@ -1582,9 +1844,10 @@ uploadSubmitBtn.addEventListener('click', async () => {
         <span class="upload-file-icon">${item.file.type.startsWith('audio') ? '♫' : '◻'}</span>
         <span class="upload-progress-name">${item.file.name}</span>
         <span class="upload-progress-status ${item.status}">${
-          item.status === 'pending'   ? '···' :
-          item.status === 'uploading' ? '↑ Uploading' :
-          item.status === 'done'      ? '✓ Done' :
+          item.status === 'pending'        ? '···' :
+          item.status === 'uploading'      ? '↑ Uploading' :
+          item.status === 'uploading-art'  ? '↑ Uploading art' :
+          item.status === 'done'           ? '✓ Done' :
           `✕ ${item.error || 'Failed'}`
         }</span>
       </div>
@@ -1594,25 +1857,24 @@ uploadSubmitBtn.addEventListener('click', async () => {
   renderProgress();
 
   for (const item of items) {
+    const isAudio = item.file.type.startsWith('audio');
     item.status = 'uploading';
     renderProgress();
 
     try {
+      // 1. Upload the main file
       const fd = new FormData();
       fd.append('file', item.file);
+      fd.append('title', item.file.name.replace(/\.[^.]+$/, ''));
 
-      // derive title from filename (strip extension)
-      const title = item.file.name.replace(/\.[^.]+$/, '');
-      fd.append('title', title);
-
-      // optional metadata as JSON
       const meta = {};
       if (artist)  meta.artist  = artist;
       if (family)  meta.family  = family;
       if (source)  meta.source  = source;
       if (concept) meta.concept = concept;
-      if (Object.keys(meta).length) fd.append('metadata', JSON.stringify(meta));
+      if (isAudio && lyrics) meta.lyrics = lyrics;
 
+      if (Object.keys(meta).length) fd.append('metadata', JSON.stringify(meta));
       if (tags.length) fd.append('tags', tags.join(','));
 
       const res = await fetch(`${API}/api/media`, { method: 'POST', body: fd });
@@ -1622,6 +1884,33 @@ uploadSubmitBtn.addEventListener('click', async () => {
           ? err.details.map(d => `${d.field}: ${d.message}`).join(', ')
           : (err.error || err.message || `HTTP ${res.status}`);
         throw new Error(detail);
+      }
+      const created = await res.json();
+
+      // 2. Upload art separately and link via PATCH if audio and art provided
+      if (isAudio && artToUpload) {
+        item.status = 'uploading-art';
+        renderProgress();
+
+        try {
+          const artFd = new FormData();
+          const artFileName = artMode === 'comfy' ? 'cover.png' : (artFile?.name || 'cover.jpg');
+          artFd.append('file', artToUpload, artFileName);
+          artFd.append('title', `${created.title || 'cover'} — Art`);
+
+          const artRes = await fetch(`${API}/api/media`, { method: 'POST', body: artFd });
+          if (artRes.ok) {
+            const artRecord = await artRes.json();
+            // Link art_id back to the track via PATCH
+            await fetch(`${API}/api/media/${created.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ metadata: { art_id: artRecord.id } })
+            });
+          }
+        } catch (_) {
+          // Art upload failed — don't fail the whole track upload
+        }
       }
 
       item.status = 'done';
@@ -1633,8 +1922,8 @@ uploadSubmitBtn.addEventListener('click', async () => {
     renderProgress();
   }
 
-  const allDone  = items.every(i => i.status === 'done');
-  const anyDone  = items.some(i  => i.status === 'done');
+  const allDone = items.every(i => i.status === 'done');
+  const anyDone = items.some(i  => i.status === 'done');
 
   uploadSubmitBtn.disabled    = false;
   uploadSubmitBtn.textContent = allDone ? '✓ Done — Close' : 'Close';

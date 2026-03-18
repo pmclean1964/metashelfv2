@@ -76,7 +76,7 @@ async function upload(req, res) {
 
   // Extract ID3 tags for audio files
   const id3 = await extractId3(req.file.path, req.file.mimetype);
-  logger.debug('ID3 extraction result', {
+  logger.info('ID3 extraction result', {
     file: req.file.originalname,
     hasLyrics: !!id3?.lyrics,
     hasCover:  !!id3?.coverBuffer,

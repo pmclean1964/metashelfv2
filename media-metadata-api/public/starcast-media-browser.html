@@ -845,6 +845,166 @@
   .upload-submit-btn:hover { background: #ff5a5a; }
   .upload-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+  /* ── VIEW TOOLBAR ── */
+  .view-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .view-toggle {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.2rem;
+  }
+  .view-btn {
+    background: none;
+    border: none;
+    border-radius: 5px;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: grid;
+    place-items: center;
+  }
+  .view-btn:hover { color: var(--text); }
+  .view-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+  /* ── BULK BAR ── */
+  .bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex: 1;
+  }
+  .bulk-select-all-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .bulk-select-all-wrap input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+  .bulk-count {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+  .bulk-delete-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.72rem;
+    font-family: var(--font-head);
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: auto;
+  }
+  .bulk-delete-btn:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
+  .bulk-delete-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── LIST VIEW ── */
+  .grid.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .list-row {
+    display: grid;
+    grid-template-columns: 32px 40px 1fr 140px 90px 80px 80px auto;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    transition: border-color 0.15s, background 0.15s;
+    animation: fadeUp 0.2s ease both;
+  }
+  .list-row:hover { border-color: var(--border2); background: var(--surface2); }
+  .list-row.selected { border-color: var(--accent); background: rgba(232,69,69,0.05); }
+
+  .list-check input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+  .list-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    object-fit: cover;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--border2);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .list-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+  .list-title-col { min-width: 0; }
+  .list-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-artist {
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-family {
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-dur {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    text-align: right;
+  }
+  .list-date {
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    text-align: right;
+  }
+  .list-actions {
+    display: flex;
+    gap: 0.3rem;
+    justify-content: flex-end;
+  }
+
   /* ── COVER ART TABS ── */
   .art-section { margin-top: 0.5rem; }
   .art-tabs { display: flex; gap: 0.3rem; margin-bottom: 0.9rem; }
@@ -919,7 +1079,22 @@
     <!-- populated by JS -->
   </div>
 
-  <!-- GRID -->
+  <!-- VIEW TOGGLE + BULK BAR -->
+  <div class="view-toolbar">
+    <div class="view-toggle">
+      <button class="view-btn active" id="viewGrid" title="Grid view">⊞</button>
+      <button class="view-btn" id="viewList" title="List view">☰</button>
+    </div>
+    <div class="bulk-bar" id="bulkBar" style="display:none">
+      <label class="bulk-select-all-wrap">
+        <input type="checkbox" id="selectAll"> <span>Select all</span>
+      </label>
+      <span class="bulk-count" id="bulkCount">0 selected</span>
+      <button class="bulk-delete-btn" id="bulkDeleteBtn" disabled>⌫ Delete selected</button>
+    </div>
+  </div>
+
+  <!-- GRID / LIST -->
   <div class="grid" id="grid">
     <div class="state-msg"><div class="spinner"></div>Loading media library...</div>
   </div>
@@ -1104,6 +1279,9 @@ const API = 'http://192.168.68.138:3000';
 const COMFY_URL = 'http://192.168.68.126:8000';
 const PAGE_SIZE = 24;
 
+let viewMode = 'grid'; // 'grid' | 'list'
+let selectedIds = new Set();
+
 let state = {
   page: 1,
   search: '',
@@ -1191,11 +1369,17 @@ async function render() {
     return;
   }
 
+  selectedIds.clear();
+  updateBulkBar();
+
   grid.innerHTML = '';
-  visible.forEach((r, i) => {
-    const card = buildCard(r, i);
-    grid.appendChild(card);
-  });
+  if (viewMode === 'list') {
+    grid.classList.add('list-view');
+    visible.forEach((r, i) => grid.appendChild(buildListRow(r, i)));
+  } else {
+    grid.classList.remove('list-view');
+    visible.forEach((r, i) => grid.appendChild(buildCard(r, i)));
+  }
 
   renderPagination(pagination);
 }
@@ -1946,6 +2130,140 @@ uploadSubmitBtn.addEventListener('click', async () => {
   uploadActions.style.display = '';
   document.getElementById('uploadClearBtn').style.display = 'none';
 });
+
+// ── VIEW TOGGLE ──────────────────────────────────────────
+document.getElementById('viewGrid').addEventListener('click', () => setView('grid'));
+document.getElementById('viewList').addEventListener('click', () => setView('list'));
+
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('viewGrid').classList.toggle('active', mode === 'grid');
+  document.getElementById('viewList').classList.toggle('active', mode === 'list');
+  document.getElementById('bulkBar').style.display = mode === 'list' ? '' : 'none';
+  selectedIds.clear();
+  render();
+}
+
+// ── BULK SELECTION ────────────────────────────────────────
+function updateBulkBar() {
+  const count   = selectedIds.size;
+  const countEl = document.getElementById('bulkCount');
+  const delBtn  = document.getElementById('bulkDeleteBtn');
+  const selAll  = document.getElementById('selectAll');
+  if (countEl) countEl.textContent = count === 0 ? '' : `${count} selected`;
+  if (delBtn)  delBtn.disabled = count === 0;
+
+  // sync select-all checkbox state
+  if (selAll) {
+    const rows = document.querySelectorAll('.list-row');
+    selAll.checked = rows.length > 0 && count === rows.length;
+    selAll.indeterminate = count > 0 && count < rows.length;
+  }
+}
+
+function toggleRowSelect(id, checked) {
+  if (checked) selectedIds.add(id); else selectedIds.delete(id);
+  const row = document.querySelector(`.list-row[data-id="${id}"]`);
+  if (row) row.classList.toggle('selected', checked);
+  updateBulkBar();
+}
+
+document.getElementById('selectAll').addEventListener('change', (e) => {
+  document.querySelectorAll('.list-row').forEach(row => {
+    const id  = row.dataset.id;
+    const chk = row.querySelector('input[type=checkbox]');
+    if (chk) chk.checked = e.target.checked;
+    if (e.target.checked) selectedIds.add(id); else selectedIds.delete(id);
+    row.classList.toggle('selected', e.target.checked);
+  });
+  updateBulkBar();
+});
+
+document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
+  if (!selectedIds.size) return;
+  const count = selectedIds.size;
+  if (!confirm(`Delete ${count} record${count > 1 ? 's' : ''} and any linked cover art? This cannot be undone.`)) return;
+
+  const btn = document.getElementById('bulkDeleteBtn');
+  btn.disabled = true;
+  btn.textContent = `Deleting…`;
+
+  // Collect art_ids from selected rows before deleting
+  const toDelete = [];
+  selectedIds.forEach(id => {
+    const row   = document.querySelector(`.list-row[data-id="${id}"]`);
+    const artId = row?.dataset.artId || '';
+    toDelete.push({ id, artId });
+  });
+
+  let deleted = 0;
+  for (const { id, artId } of toDelete) {
+    try {
+      const res = await fetch(`${API}/api/media/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        deleted++;
+        if (artId) await fetch(`${API}/api/media/${artId}`, { method: 'DELETE' });
+        const row = document.querySelector(`.list-row[data-id="${id}"]`);
+        if (row) { row.style.opacity = '0'; setTimeout(() => row.remove(), 180); }
+      }
+    } catch (_) {}
+  }
+
+  selectedIds.clear();
+  btn.textContent = '⌫ Delete selected';
+  updateBulkBar();
+  fetchStats();
+  if (deleted < toDelete.length) alert(`${deleted} of ${toDelete.length} deleted. Some may have failed.`);
+});
+
+// ── BUILD LIST ROW ────────────────────────────────────────
+function buildListRow(r, i) {
+  const isAudio = r.mediaType === 'AUDIO';
+  const isImage = r.mediaType === 'IMAGE';
+  const m       = r.metadata || {};
+  const family  = m.family || '';
+  const fmeta   = FAMILY_META[family] || {};
+  const artId   = m.art_id || '';
+  const dur     = r.durationSeconds ? formatDuration(r.durationSeconds) : '—';
+  const date    = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '';
+
+  // thumbnail
+  let thumbHtml = '';
+  if (isAudio && artId) {
+    thumbHtml = `<img src="${API}/api/media/${artId}/file" alt="" loading="lazy" onerror="this.parentElement.textContent='♫'">`;
+  } else if (isImage) {
+    thumbHtml = `<img src="${API}/api/media/${r.id}/file" alt="" loading="lazy">`;
+  } else {
+    thumbHtml = `♫`;
+  }
+
+  const playBtn   = isAudio ? `<button class="action-btn play" onclick="togglePlayer(event,'${r.id}')">▶</button>` : '';
+  const viewBtn   = isImage ? `<a class="action-btn view" href="${API}/api/media/${r.id}/file" target="_blank">↗</a>` : '';
+  const detailBtn = `<button class="action-btn" onclick="openModal(event,'${r.id}')">≡</button>`;
+  const deleteBtn = `<button class="action-btn del" onclick="deleteRecord(event,'${r.id}','${artId}',this)">⌫</button>`;
+
+  const row = document.createElement('div');
+  row.className = 'list-row';
+  row.dataset.id    = r.id;
+  row.dataset.artId = artId;
+  row.style.animationDelay = `${i * 0.02}s`;
+
+  row.innerHTML = `
+    <div class="list-check"><input type="checkbox" onchange="toggleRowSelect('${r.id}', this.checked)"></div>
+    <div class="list-thumb">${thumbHtml}</div>
+    <div class="list-title-col">
+      <div class="list-title">${r.title || 'Untitled'}</div>
+      <div class="list-artist">${m.artist || r.createdBy || ''}</div>
+    </div>
+    <div class="list-family">${fmeta.emoji||''} ${fmeta.label || family}</div>
+    <div class="list-dur">${dur}</div>
+    <div class="list-date">${date}</div>
+    <div class="list-actions">${playBtn}${viewBtn}${detailBtn}${deleteBtn}</div>
+    <div id="player-${r.id}" class="card-player" style="grid-column:1/-1;margin:0"></div>
+  `;
+
+  return row;
+}
 
 // ── DELETE ────────────────────────────────────────────────
 async function deleteRecord(e, id, artId, btn) {

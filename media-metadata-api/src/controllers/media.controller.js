@@ -14,7 +14,7 @@ const logger = require('../config/logger');
 async function extractId3(filePath, mimeType) {
   if (!mimeType.startsWith('audio/')) return null;
   try {
-    const mm = await import('music-metadata');
+    const mm = require('music-metadata');
     const meta = await mm.parseFile(filePath, { skipCovers: false });
     const { common, format } = meta;
 

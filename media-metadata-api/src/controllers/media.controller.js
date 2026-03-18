@@ -58,7 +58,7 @@ async function createCoverRecord(coverBuffer, coverMime, trackTitle) {
       size:             coverBuffer.length,
     };
 
-    const coverBody = { title: `${trackTitle || 'Cover'} — Art` };
+    const coverBody = { title: `${trackTitle || 'Cover'} — Art`, metadata: JSON.stringify({ linked_art: true }) };
     const record    = await service.createMedia(fakeFile, coverBody);
     logger.info(`Created cover art record ${record.id} from embedded ID3`);
     return record.id;

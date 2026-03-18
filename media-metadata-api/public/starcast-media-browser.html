@@ -431,6 +431,7 @@
   .action-btn.play:hover  { border-color: var(--blue);  color: var(--blue); }
   .action-btn.view:hover  { border-color: var(--purple); color: var(--purple); }
   .action-btn.lyrics:hover{ border-color: var(--green); color: var(--green); }
+  .action-btn.del:hover   { border-color: var(--accent); color: var(--accent); }
 
   /* ── AUDIO PLAYER ── */
   .card-player {
@@ -1181,14 +1182,17 @@ async function render() {
   });
   renderFamilyFilters();
 
-  if (!records.length) {
+  // Filter out auto-generated linked art (cover images embedded in audio tracks)
+  const visible = records.filter(r => !r.metadata?.linked_art);
+
+  if (!visible.length) {
     grid.innerHTML = `<div class="state-msg"><span class="big">◌</span>No records found</div>`;
     renderPagination(pagination);
     return;
   }
 
   grid.innerHTML = '';
-  records.forEach((r, i) => {
+  visible.forEach((r, i) => {
     const card = buildCard(r, i);
     grid.appendChild(card);
   });
@@ -1254,7 +1258,8 @@ function buildCard(r, i) {
   const playBtn   = isAudio ? `<button class="action-btn play" onclick="togglePlayer(event,'${r.id}')">▶ Play</button>` : '';
   const viewBtn   = isImage ? `<a class="action-btn view" href="${API}/api/media/${r.id}/file" target="_blank">↗ View</a>` : '';
   const lyricsBtn = m.lyrics ? `<button class="action-btn lyrics" onclick="openModal(event,'${r.id}')">♪ Lyrics</button>` : '';
-  const detailBtn = `<button class="action-btn" onclick="openModal(event,'${r.id}')">≡ Detail</button>`;
+  const detailBtn  = `<button class="action-btn" onclick="openModal(event,'${r.id}')">≡ Detail</button>`;
+  const deleteBtn  = `<button class="action-btn del" onclick="deleteRecord(event,'${r.id}','${artId||''}',this)">⌫ Delete</button>`;
 
   card.innerHTML = `
     ${artHtml}
@@ -1271,7 +1276,7 @@ function buildCard(r, i) {
       <div id="player-${r.id}" class="card-player"></div>
       <div class="card-footer">
         <span class="card-date">${date}</span>
-        <div class="card-actions">${playBtn}${viewBtn}${lyricsBtn}${detailBtn}</div>
+        <div class="card-actions">${playBtn}${viewBtn}${lyricsBtn}${detailBtn}${deleteBtn}</div>
       </div>
     </div>
   `;
@@ -1506,7 +1511,13 @@ document.querySelectorAll('.filter-btn[data-type]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn[data-type]').forEach(b => b.classList.remove('active','active-audio','active-image'));
     const t = btn.dataset.type;
-    btn.classList.add('active', t==='AUDIO'?'active-audio': t==='IMAGE'?'active-image':'');
+    if (t === 'all') {
+      btn.classList.add('active');
+    } else if (t === 'AUDIO') {
+      btn.classList.add('active', 'active-audio');
+    } else if (t === 'IMAGE') {
+      btn.classList.add('active', 'active-image');
+    }
     state.type = t;
     state.page = 1;
     render();
@@ -1935,6 +1946,47 @@ uploadSubmitBtn.addEventListener('click', async () => {
   uploadActions.style.display = '';
   document.getElementById('uploadClearBtn').style.display = 'none';
 });
+
+// ── DELETE ────────────────────────────────────────────────
+async function deleteRecord(e, id, artId, btn) {
+  e.stopPropagation();
+
+  const hasLinkedArt = !!artId;
+  const msg = hasLinkedArt
+    ? 'Delete this track and its linked cover art?'
+    : 'Delete this record? This cannot be undone.';
+
+  if (!confirm(msg)) return;
+
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    // Delete the main record
+    const res = await fetch(`${API}/api/media/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // If audio with linked art, delete the art record too
+    if (hasLinkedArt) {
+      await fetch(`${API}/api/media/${artId}`, { method: 'DELETE' });
+    }
+
+    // Remove the card from the DOM immediately
+    const card = btn.closest('.card');
+    card.style.transition = 'opacity 0.2s, transform 0.2s';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      card.remove();
+      fetchStats();
+    }, 200);
+
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '⌫ Delete';
+    alert('Delete failed: ' + err.message);
+  }
+}
 
 // ── INIT ──────────────────────────────────────────────────
 fetchStats();

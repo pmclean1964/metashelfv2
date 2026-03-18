@@ -74,6 +74,12 @@ router.post(
       body: req.body,
       file: req.file ? { originalname: req.file.originalname, mimetype: req.file.mimetype, size: req.file.size } : null,
     });
+    // Ensure title is always present for the validator —
+    // the controller will override with ID3 title after validation
+    if (!req.body.title && req.file) {
+      const path = require('path');
+      req.body.title = path.parse(req.file.originalname).name;
+    }
     next();
   },
   validate(uploadBodySchema, 'body'),

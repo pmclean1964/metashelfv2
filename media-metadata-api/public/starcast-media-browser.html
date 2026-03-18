@@ -1865,7 +1865,7 @@ uploadSubmitBtn.addEventListener('click', async () => {
       // 1. Upload the main file
       const fd = new FormData();
       fd.append('file', item.file);
-      fd.append('title', item.file.name.replace(/\.[^.]+$/, ''));
+      // Title is derived server-side from ID3 tags; filename is the fallback
 
       const meta = {};
       if (artist)  meta.artist  = artist;

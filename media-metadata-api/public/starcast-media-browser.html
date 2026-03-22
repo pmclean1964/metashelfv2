@@ -1009,6 +1009,36 @@
   .bulk-delete-btn:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
   .bulk-delete-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+  /* ── PAGE SIZE SELECTOR ── */
+  .page-size-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .page-size-select {
+    background-color: var(--surface2);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%236b7590' d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.45rem center;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 0.25rem 1.6rem 0.25rem 0.6rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .page-size-select:hover,
+  .page-size-select:focus { border-color: var(--border2); }
+
   /* ── LIST VIEW ── */
   .grid.list-view {
     display: flex;
@@ -1175,6 +1205,15 @@
     <div class="view-toggle">
       <button class="view-btn active" id="viewGrid" title="Grid view">⊞</button>
       <button class="view-btn" id="viewList" title="List view">☰</button>
+    </div>
+    <div class="page-size-wrap">
+      Show
+      <select class="page-size-select" id="pageSizeSelect">
+        <option value="20" selected>20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      per page
     </div>
     <div class="bulk-bar" id="bulkBar" style="display:none">
       <label class="bulk-select-all-wrap">
@@ -1406,7 +1445,7 @@
 <script>
 const API = 'http://192.168.68.138:3000';
 const COMFY_URL = 'http://192.168.68.126:8000';
-const PAGE_SIZE = 24;
+let PAGE_SIZE = 20;
 
 let viewMode = 'grid'; // 'grid' | 'list'
 let selectedIds = new Set();
@@ -1437,6 +1476,9 @@ const FAMILY_META = {
   'orchestral':        { label: 'Orchestral',          emoji: '🎻' },
   'industrial':        { label: 'Industrial',          emoji: '⚙️' },
 };
+
+// Pre-seed all known families so filter chips always appear
+Object.keys(FAMILY_META).forEach(f => state.allFamilies.add(f));
 
 // ── FETCH ─────────────────────────────────────────────────
 async function fetchMedia() {
@@ -2315,6 +2357,13 @@ document.getElementById('selectAll').addEventListener('change', (e) => {
     row.classList.toggle('selected', e.target.checked);
   });
   updateBulkBar();
+});
+
+document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+  PAGE_SIZE = parseInt(e.target.value, 10);
+  state.page = 1;
+  selectedIds.clear();
+  render();
 });
 
 document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {

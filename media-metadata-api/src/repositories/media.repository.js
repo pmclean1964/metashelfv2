@@ -14,18 +14,32 @@ function buildMetadataFilters(query) {
   const conditions = [];
   for (const [key, value] of Object.entries(query)) {
     if (!key.startsWith('metadata.')) continue;
-    const jsonKey = key.slice('metadata.'.length); // e.g. "station"
+    const jsonKey = key.slice('metadata.'.length); // e.g. "family"
 
     // Cast to number when possible so numeric comparisons work
     const parsed = Number(value);
-    const castValue = !isNaN(parsed) && value !== '' ? parsed : value;
+    const isNumeric = !isNaN(parsed) && value !== '';
 
-    conditions.push({
-      metadata: {
-        path: [jsonKey],
-        equals: castValue,
-      },
-    });
+    if (isNumeric) {
+      // Numeric: use exact equals
+      conditions.push({
+        metadata: {
+          path: [jsonKey],
+          equals: parsed,
+        },
+      });
+    } else {
+      // String: use string_contains so that minor casing or encoding
+      // differences (e.g. "Space_Weather" vs "space_weather") don't
+      // cause a miss. Family values are unique enough that a substring
+      // match is safe.
+      conditions.push({
+        metadata: {
+          path: [jsonKey],
+          string_contains: value,
+        },
+      });
+    }
   }
   return conditions;
 }

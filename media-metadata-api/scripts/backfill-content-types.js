@@ -118,8 +118,8 @@ async function main() {
     const breakdown = await prisma.media.groupBy({
       by: ['contentType'],
       _count: { _all: true },
-      orderBy: { _count: { _all: 'desc' } },
     });
+    breakdown.sort((a, b) => b._count._all - a._count._all);
 
     const nullCount = await prisma.media.count({ where: { contentType: null } });
 

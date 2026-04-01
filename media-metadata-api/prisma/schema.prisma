@@ -36,8 +36,28 @@ model Media {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
+  // Lifecycle management
+  status           String    @default("active")
+  staleReason      String?
+  staleAt          DateTime?
+  staleBy          String?
+  expiresAt        DateTime?
+
+  // Starcast content identity
+  contentType      String?
+  stationId        String?
+
+  // Agent traceability
+  generatedBy      String?
+  runId            String?
+
   @@index([mediaType])
   @@index([createdAt])
   @@index([checksum])
+  @@index([status])
+  @@index([contentType])
+  @@index([stationId])
+  @@index([expiresAt])
+  @@index([contentType, stationId, status])
   @@map("media")
 }

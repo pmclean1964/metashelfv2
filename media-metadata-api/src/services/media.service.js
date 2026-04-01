@@ -63,6 +63,13 @@ async function createMedia(file, body) {
     height: body.height ? Number(body.height) : null,
     createdBy: body.createdBy || null,
     metadata,
+    // Starcast / lifecycle fields
+    status: body.status || 'active',
+    contentType: body.contentType || null,
+    stationId: body.stationId || null,
+    generatedBy: body.generatedBy || null,
+    runId: body.runId || null,
+    expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
   });
 
   return serialiseMedia(record);
@@ -88,6 +95,15 @@ async function listMedia(query) {
       totalPages: Math.ceil(total / pageSize),
     },
   };
+}
+
+// ── Count ─────────────────────────────────────────────────────────────────────
+
+async function countMedia(query) {
+  // Strip pagination/sort params — they don't affect the count
+  const { page, pageSize, sortBy, sortOrder, ...rest } = query;
+  const where = repo.buildWhereClause(rest);
+  return repo.count(where);
 }
 
 // ── Get by ID ─────────────────────────────────────────────────────────────────
@@ -133,9 +149,54 @@ async function updateMedia(id, body) {
     ...(body.height !== undefined && { height: body.height }),
     ...(body.createdBy !== undefined && { createdBy: body.createdBy }),
     ...(mergedMetadata !== undefined && { metadata: mergedMetadata }),
+    // Starcast / lifecycle fields
+    ...(body.status !== undefined && { status: body.status }),
+    ...(body.contentType !== undefined && { contentType: body.contentType || null }),
+    ...(body.stationId !== undefined && { stationId: body.stationId || null }),
+    ...(body.generatedBy !== undefined && { generatedBy: body.generatedBy || null }),
+    ...(body.runId !== undefined && { runId: body.runId || null }),
+    ...(body.expiresAt !== undefined && { expiresAt: body.expiresAt ? new Date(body.expiresAt) : null }),
   };
 
   const updated = await repo.update(id, data);
+  return serialiseMedia(updated);
+}
+
+// ── Status transitions ────────────────────────────────────────────────────────
+
+async function markStale(id, { reason, staleBy }) {
+  const existing = await repo.findById(id);
+  if (!existing) throw new NotFoundError('Media', id);
+
+  const updated = await repo.update(id, {
+    status: 'stale',
+    staleReason: reason,
+    staleAt: new Date(),
+    staleBy,
+  });
+  return serialiseMedia(updated);
+}
+
+async function markPending(id, { claimedBy, runId }) {
+  const existing = await repo.findById(id);
+  if (!existing) throw new NotFoundError('Media', id);
+
+  const updated = await repo.update(id, {
+    status: 'pending',
+    generatedBy: claimedBy,
+    runId,
+  });
+  return serialiseMedia(updated);
+}
+
+async function archiveMedia(id, { archivedBy }) {
+  const existing = await repo.findById(id);
+  if (!existing) throw new NotFoundError('Media', id);
+
+  const updated = await repo.update(id, {
+    status: 'archived',
+    staleBy: archivedBy,
+  });
   return serialiseMedia(updated);
 }
 
@@ -163,8 +224,12 @@ async function deleteMedia(id) {
 module.exports = {
   createMedia,
   listMedia,
+  countMedia,
   getMediaById,
   getMediaFilePath,
   updateMedia,
+  markStale,
+  markPending,
+  archiveMedia,
   deleteMedia,
 };

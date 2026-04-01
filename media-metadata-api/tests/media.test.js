@@ -52,6 +52,24 @@ describe('POST /api/media', () => {
     expect(res.body.checksum).toMatch(/^md5:/);
   });
 
+  it('stores contentType, stationId, generatedBy, runId when supplied', async () => {
+    const res = await request(app)
+      .post('/api/media')
+      .field('title', 'Station Break 001')
+      .field('contentType', 'station_break')
+      .field('stationId', 'station-abc')
+      .field('generatedBy', 'station-break-agent')
+      .field('runId', 'run-uuid-001')
+      .attach('file', testFilePath);
+
+    expect(res.status).toBe(201);
+    expect(res.body.contentType).toBe('station_break');
+    expect(res.body.stationId).toBe('station-abc');
+    expect(res.body.generatedBy).toBe('station-break-agent');
+    expect(res.body.runId).toBe('run-uuid-001');
+    expect(res.body.status).toBe('active');
+  });
+
   it('returns 400 when title is missing', async () => {
     const res = await request(app)
       .post('/api/media')
@@ -128,6 +146,95 @@ describe('GET /api/media', () => {
     const res = await request(app).get('/api/media?pageSize=999');
     expect(res.status).toBe(400);
   });
+
+  it('filters by status', async () => {
+    await createMediaRecord({ title: 'Active One', status: 'active' });
+    await createMediaRecord({ title: 'Stale One', status: 'stale' });
+
+    const res = await request(app).get('/api/media?status=stale');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].status).toBe('stale');
+  });
+
+  it('filters by contentType', async () => {
+    await createMediaRecord({ contentType: 'station_break' });
+    await createMediaRecord({ contentType: 'news_segment' });
+
+    const res = await request(app).get('/api/media?contentType=station_break');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].contentType).toBe('station_break');
+  });
+
+  it('filters by stationId', async () => {
+    await createMediaRecord({ stationId: 'station-A' });
+    await createMediaRecord({ stationId: 'station-B' });
+
+    const res = await request(app).get('/api/media?stationId=station-A');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].stationId).toBe('station-A');
+  });
+
+  it('filters by createdAfter and createdBefore', async () => {
+    await createMediaRecord({ title: 'Old Record' });
+    const before = new Date().toISOString();
+    // Small delay so the next record is definitively after `before`
+    await new Promise((r) => setTimeout(r, 10));
+    await createMediaRecord({ title: 'New Record' });
+
+    const res = await request(app).get(`/api/media?createdAfter=${before}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].title).toBe('New Record');
+  });
+});
+
+// ── Count ─────────────────────────────────────────────────────────────────────
+describe('GET /api/media/count', () => {
+  it('returns the total count of all records', async () => {
+    await createMediaRecord();
+    await createMediaRecord();
+    await createMediaRecord();
+
+    const res = await request(app).get('/api/media/count');
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(3);
+  });
+
+  it('returns count filtered by status', async () => {
+    await createMediaRecord({ status: 'active' });
+    await createMediaRecord({ status: 'active' });
+    await createMediaRecord({ status: 'stale' });
+
+    const res = await request(app).get('/api/media/count?status=active');
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(2);
+  });
+
+  it('returns count filtered by contentType and stationId', async () => {
+    await createMediaRecord({ contentType: 'station_break', stationId: 'stn-1' });
+    await createMediaRecord({ contentType: 'station_break', stationId: 'stn-2' });
+    await createMediaRecord({ contentType: 'news_segment', stationId: 'stn-1' });
+
+    const res = await request(app).get('/api/media/count?contentType=station_break&stationId=stn-1');
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+  });
+
+  it('returns 0 when nothing matches', async () => {
+    await createMediaRecord({ status: 'active' });
+
+    const res = await request(app).get('/api/media/count?status=archived');
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(0);
+  });
+
+  it('returns 400 for invalid query params', async () => {
+    const res = await request(app).get('/api/media/count?pageSize=999');
+    expect(res.status).toBe(400);
+  });
 });
 
 // ── Get by ID ─────────────────────────────────────────────────────────────────
@@ -183,6 +290,20 @@ describe('PATCH /api/media/:id', () => {
     expect(res.body.metadata.approved).toBe(true);    // added
   });
 
+  it('updates contentType, stationId, generatedBy, runId', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .patch(`/api/media/${record.id}`)
+      .send({ contentType: 'music_track', stationId: 'stn-99', generatedBy: 'music-service', runId: 'run-xyz' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.contentType).toBe('music_track');
+    expect(res.body.stationId).toBe('stn-99');
+    expect(res.body.generatedBy).toBe('music-service');
+    expect(res.body.runId).toBe('run-xyz');
+  });
+
   it('returns 400 when body is empty', async () => {
     const record = await createMediaRecord();
     const res = await request(app).patch(`/api/media/${record.id}`).send({});
@@ -215,6 +336,199 @@ describe('DELETE /api/media/:id', () => {
   it('returns 404 for unknown id', async () => {
     const res = await request(app).delete('/api/media/00000000-0000-0000-0000-000000000000');
     expect(res.status).toBe(404);
+  });
+});
+
+// ── Status transitions ────────────────────────────────────────────────────────
+describe('POST /api/media/:id/mark-stale', () => {
+  it('sets status=stale and records staleReason, staleBy, staleAt', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/mark-stale`)
+      .send({ reason: 'ttl_expired', staleBy: 'librarian-agent' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('stale');
+    expect(res.body.staleReason).toBe('ttl_expired');
+    expect(res.body.staleBy).toBe('librarian-agent');
+    expect(res.body.staleAt).toBeDefined();
+  });
+
+  it('returns 400 when reason is invalid', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/mark-stale`)
+      .send({ reason: 'not_a_real_reason', staleBy: 'librarian-agent' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when required fields are missing', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/mark-stale`)
+      .send({ reason: 'manual' }); // missing staleBy
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for unknown id', async () => {
+    const res = await request(app)
+      .post('/api/media/00000000-0000-0000-0000-000000000000/mark-stale')
+      .send({ reason: 'manual', staleBy: 'librarian-agent' });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/media/:id/mark-pending', () => {
+  it('sets status=pending and records generatedBy, runId', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/mark-pending`)
+      .send({ claimedBy: 'music-service', runId: 'run-abc-123' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('pending');
+    expect(res.body.generatedBy).toBe('music-service');
+    expect(res.body.runId).toBe('run-abc-123');
+  });
+
+  it('returns 400 when required fields are missing', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/mark-pending`)
+      .send({ claimedBy: 'music-service' }); // missing runId
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for unknown id', async () => {
+    const res = await request(app)
+      .post('/api/media/00000000-0000-0000-0000-000000000000/mark-pending')
+      .send({ claimedBy: 'music-service', runId: 'run-xyz' });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/media/:id/archive', () => {
+  it('sets status=archived', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/archive`)
+      .send({ archivedBy: 'librarian-agent' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('archived');
+  });
+
+  it('returns 400 when archivedBy is missing', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/media/${record.id}/archive`)
+      .send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for unknown id', async () => {
+    const res = await request(app)
+      .post('/api/media/00000000-0000-0000-0000-000000000000/archive')
+      .send({ archivedBy: 'librarian-agent' });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+// ── v2 envelope ───────────────────────────────────────────────────────────────
+describe('GET /api/v2/media', () => {
+  it('returns envelope with hasMore=false when all records fit on one page', async () => {
+    await createMediaRecord({ title: 'Alpha' });
+    await createMediaRecord({ title: 'Beta' });
+
+    const res = await request(app).get('/api/v2/media');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.pagination.total).toBe(2);
+    expect(res.body.pagination.hasMore).toBe(false);
+    expect(res.body.pagination.totalPages).toBeUndefined();
+  });
+
+  it('returns hasMore=true when more records exist beyond the page', async () => {
+    for (let i = 0; i < 5; i++) {
+      await createMediaRecord({ title: `Track ${i}` });
+    }
+
+    const res = await request(app).get('/api/v2/media?page=1&pageSize=3');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(3);
+    expect(res.body.pagination.hasMore).toBe(true);
+    expect(res.body.pagination.total).toBe(5);
+  });
+
+  it('supports status filter', async () => {
+    await createMediaRecord({ status: 'active', contentType: 'station_break' });
+    await createMediaRecord({ status: 'stale', contentType: 'station_break' });
+
+    const res = await request(app).get('/api/v2/media?status=active&contentType=station_break');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].status).toBe('active');
+  });
+});
+
+describe('GET /api/v2/media/count', () => {
+  it('returns { count: N } without extra envelope wrapping', async () => {
+    await createMediaRecord({ status: 'active' });
+    await createMediaRecord({ status: 'active' });
+    await createMediaRecord({ status: 'stale' });
+
+    const res = await request(app).get('/api/v2/media/count?status=active');
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(2);
+    // count endpoint should NOT be double-wrapped
+    expect(res.body.data).toBeUndefined();
+  });
+});
+
+describe('GET /api/v2/media/:id', () => {
+  it('returns single record wrapped in envelope', async () => {
+    const record = await createMediaRecord({ title: 'Wrapped Record' });
+
+    const res = await request(app).get(`/api/v2/media/${record.id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.id).toBe(record.id);
+    expect(res.body.data.title).toBe('Wrapped Record');
+    expect(res.body.pagination).toEqual({ total: 1, page: 1, pageSize: 1, hasMore: false });
+  });
+
+  it('returns 404 for unknown id', async () => {
+    const res = await request(app).get('/api/v2/media/00000000-0000-0000-0000-000000000000');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/v2/media/:id/mark-stale', () => {
+  it('returns stale record wrapped in envelope', async () => {
+    const record = await createMediaRecord();
+
+    const res = await request(app)
+      .post(`/api/v2/media/${record.id}/mark-stale`)
+      .send({ reason: 'superseded', staleBy: 'librarian-agent' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('stale');
+    expect(res.body.data.staleReason).toBe('superseded');
+    expect(res.body.pagination).toEqual({ total: 1, page: 1, pageSize: 1, hasMore: false });
   });
 });
 

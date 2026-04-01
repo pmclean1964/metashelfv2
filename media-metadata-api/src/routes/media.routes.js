@@ -12,6 +12,9 @@ const {
   uploadBodySchema,
   updateBodySchema,
   listQuerySchema,
+  markStaleBodySchema,
+  markPendingBodySchema,
+  archiveBodySchema,
 } = require('../validators/media.validators');
 
 /**
@@ -31,7 +34,6 @@ const {
  *               file:
  *                 type: string
  *                 format: binary
- *                 description: The media file to upload
  *               title:
  *                 type: string
  *               description:
@@ -50,6 +52,23 @@ const {
  *               metadata:
  *                 type: string
  *                 description: JSON object string with arbitrary key-value pairs
+ *               contentType:
+ *                 type: string
+ *                 description: "Starcast content type (e.g. station_break, news_segment, music_track)"
+ *               stationId:
+ *                 type: string
+ *               generatedBy:
+ *                 type: string
+ *                 description: Agent name that generated this content
+ *               runId:
+ *                 type: string
+ *                 description: UUID of the agent run that created this
+ *               status:
+ *                 type: string
+ *                 enum: [active, stale, pending, error, archived]
+ *               expiresAt:
+ *                 type: string
+ *                 format: date-time
  *     responses:
  *       201:
  *         description: Media created
@@ -58,11 +77,7 @@ const {
  *             schema:
  *               $ref: '#/components/schemas/Media'
  *       400:
- *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *         $ref: '#/components/responses/ValidationError'
  *       413:
  *         description: File too large
  */
@@ -85,6 +100,56 @@ router.post(
   validate(uploadBodySchema, 'body'),
   controller.upload
 );
+
+/**
+ * @openapi
+ * /api/media/count:
+ *   get:
+ *     tags: [Media]
+ *     summary: Count media records matching the given filters
+ *     description: >
+ *       Accepts the same filter parameters as GET /api/media (excluding
+ *       pagination and sort). Returns a single count — agents use this to
+ *       check depth without fetching full records.
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [active, stale, pending, error, archived] }
+ *       - in: query
+ *         name: contentType
+ *         schema: { type: string }
+ *       - in: query
+ *         name: stationId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: mediaType
+ *         schema: { type: string, enum: [AUDIO, IMAGE, VIDEO, OTHER] }
+ *       - in: query
+ *         name: createdAfter
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: createdBefore
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: expiresAfter
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: expiresBefore
+ *         schema: { type: string, format: date-time }
+ *     responses:
+ *       200:
+ *         description: Count of matching records
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count: { type: integer, example: 42 }
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+// NOTE: /count must be registered before /:id so Express doesn't treat "count" as an id
+router.get('/count', validate(listQuerySchema, 'query'), controller.count);
 
 /**
  * @openapi
@@ -125,6 +190,28 @@ router.post(
  *       - in: query
  *         name: sortOrder
  *         schema: { type: string, enum: [asc, desc], default: desc }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [active, stale, pending, error, archived] }
+ *       - in: query
+ *         name: contentType
+ *         schema: { type: string }
+ *         description: "e.g. station_break, news_segment, music_track"
+ *       - in: query
+ *         name: stationId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: createdAfter
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: createdBefore
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: expiresAfter
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: expiresBefore
+ *         schema: { type: string, format: date-time }
  *       - in: query
  *         name: "metadata.station"
  *         schema: { type: string }
@@ -223,6 +310,17 @@ router.get('/:id/file', controller.streamFile);
  *                 type: object
  *                 additionalProperties: true
  *                 description: Merged (not replaced) into existing metadata
+ *               contentType: { type: string }
+ *               stationId: { type: string }
+ *               generatedBy: { type: string }
+ *               runId: { type: string }
+ *               status:
+ *                 type: string
+ *                 enum: [active, stale, pending, error, archived]
+ *               expiresAt:
+ *                 type: string
+ *                 format: date-time
+ *                 nullable: true
  *     responses:
  *       200:
  *         description: Updated media record
@@ -262,5 +360,119 @@ router.patch('/:id', validate(updateBodySchema, 'body'), controller.update);
  *         description: Not found
  */
 router.delete('/:id', controller.remove);
+
+/**
+ * @openapi
+ * /api/media/{id}/mark-stale:
+ *   post:
+ *     tags: [Media]
+ *     summary: Mark a media record as stale
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason, staleBy]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 enum: [ttl_expired, depth_cull, superseded, integrity_check, manual]
+ *               staleBy:
+ *                 type: string
+ *                 description: Agent or user that triggered the staleness
+ *     responses:
+ *       200:
+ *         description: Updated media record
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Media'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       404:
+ *         description: Not found
+ */
+router.post('/:id/mark-stale', validate(markStaleBodySchema, 'body'), controller.markStale);
+
+/**
+ * @openapi
+ * /api/media/{id}/mark-pending:
+ *   post:
+ *     tags: [Media]
+ *     summary: Mark a media record as pending (claimed by an agent run)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [claimedBy, runId]
+ *             properties:
+ *               claimedBy:
+ *                 type: string
+ *                 description: Agent name claiming this record
+ *               runId:
+ *                 type: string
+ *                 description: UUID of the agent run
+ *     responses:
+ *       200:
+ *         description: Updated media record
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Media'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       404:
+ *         description: Not found
+ */
+router.post('/:id/mark-pending', validate(markPendingBodySchema, 'body'), controller.markPending);
+
+/**
+ * @openapi
+ * /api/media/{id}/archive:
+ *   post:
+ *     tags: [Media]
+ *     summary: Archive a media record
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [archivedBy]
+ *             properties:
+ *               archivedBy:
+ *                 type: string
+ *                 description: Agent or user performing the archive
+ *     responses:
+ *       200:
+ *         description: Updated media record
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Media'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       404:
+ *         description: Not found
+ */
+router.post('/:id/archive', validate(archiveBodySchema, 'body'), controller.archive);
 
 module.exports = router;

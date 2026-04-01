@@ -140,6 +140,12 @@ async function upload(req, res) {
   return res.status(201).json(media);
 }
 
+// ── GET /api/media/count ──────────────────────────────────────────────────────
+async function count(req, res) {
+  const n = await service.countMedia(req.query);
+  return res.json({ count: n });
+}
+
 // ── GET /api/media ────────────────────────────────────────────────────────────
 async function list(req, res) {
   const result = await service.listMedia(req.query);
@@ -197,4 +203,22 @@ async function remove(req, res) {
   return res.json(result);
 }
 
-module.exports = { upload, list, getById, streamFile, update, remove };
+// ── POST /api/media/:id/mark-stale ────────────────────────────────────────────
+async function markStale(req, res) {
+  const media = await service.markStale(req.params.id, req.body);
+  return res.json(media);
+}
+
+// ── POST /api/media/:id/mark-pending ─────────────────────────────────────────
+async function markPending(req, res) {
+  const media = await service.markPending(req.params.id, req.body);
+  return res.json(media);
+}
+
+// ── POST /api/media/:id/archive ───────────────────────────────────────────────
+async function archive(req, res) {
+  const media = await service.archiveMedia(req.params.id, req.body);
+  return res.json(media);
+}
+
+module.exports = { upload, count, list, getById, streamFile, update, remove, markStale, markPending, archive };

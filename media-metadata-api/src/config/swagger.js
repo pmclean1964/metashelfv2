@@ -21,6 +21,16 @@ const options = {
       },
     ],
     components: {
+      responses: {
+        ValidationError: {
+          description: 'Validation error',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/Error' },
+            },
+          },
+        },
+      },
       schemas: {
         Media: {
           type: 'object',
@@ -47,6 +57,16 @@ const options = {
             },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
+            // Lifecycle fields
+            status: { type: 'string', enum: ['active', 'stale', 'pending', 'error', 'archived'], example: 'active' },
+            staleReason: { type: 'string', nullable: true, enum: ['ttl_expired', 'depth_cull', 'superseded', 'integrity_check', 'manual'] },
+            staleAt: { type: 'string', format: 'date-time', nullable: true },
+            staleBy: { type: 'string', nullable: true },
+            expiresAt: { type: 'string', format: 'date-time', nullable: true },
+            contentType: { type: 'string', nullable: true, example: 'station_break' },
+            stationId: { type: 'string', nullable: true, example: 'station-uuid' },
+            generatedBy: { type: 'string', nullable: true, example: 'station-break-agent' },
+            runId: { type: 'string', nullable: true, example: 'run-uuid' },
           },
         },
         MediaList: {
@@ -64,6 +84,36 @@ const options = {
             },
           },
         },
+        MediaV2List: {
+          type: 'object',
+          properties: {
+            data: { type: 'array', items: { $ref: '#/components/schemas/Media' } },
+            pagination: {
+              type: 'object',
+              properties: {
+                total: { type: 'integer' },
+                page: { type: 'integer' },
+                pageSize: { type: 'integer' },
+                hasMore: { type: 'boolean' },
+              },
+            },
+          },
+        },
+        MediaV2Single: {
+          type: 'object',
+          properties: {
+            data: { $ref: '#/components/schemas/Media' },
+            pagination: {
+              type: 'object',
+              properties: {
+                total: { type: 'integer', example: 1 },
+                page: { type: 'integer', example: 1 },
+                pageSize: { type: 'integer', example: 1 },
+                hasMore: { type: 'boolean', example: false },
+              },
+            },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
@@ -74,7 +124,8 @@ const options = {
       },
     },
     tags: [
-      { name: 'Media', description: 'Media file upload and management' },
+      { name: 'Media', description: 'Media file upload and management (v1)' },
+      { name: 'Media v2', description: 'Media API — v2 envelope (data + pagination.hasMore)' },
       { name: 'System', description: 'Health and metadata endpoints' },
     ],
   },

@@ -55,6 +55,14 @@ function buildWhereClause(query) {
     createdBy,
     mimeType,
     checksum,
+    // New filters
+    status,
+    contentType,
+    stationId,
+    createdAfter,
+    createdBefore,
+    expiresAfter,
+    expiresBefore,
     ...rest
   } = query;
 
@@ -82,6 +90,26 @@ function buildWhereClause(query) {
     }
   }
 
+  // New field filters — exact match
+  if (status) and.push({ status });
+  if (contentType) and.push({ contentType });
+  if (stationId) and.push({ stationId });
+
+  // Date range filters
+  if (createdAfter || createdBefore) {
+    const filter = {};
+    if (createdAfter) filter.gte = new Date(createdAfter);
+    if (createdBefore) filter.lte = new Date(createdBefore);
+    and.push({ createdAt: filter });
+  }
+
+  if (expiresAfter || expiresBefore) {
+    const filter = {};
+    if (expiresAfter) filter.gte = new Date(expiresAfter);
+    if (expiresBefore) filter.lte = new Date(expiresBefore);
+    and.push({ expiresAt: filter });
+  }
+
   const metaConditions = buildMetadataFilters(rest);
   and.push(...metaConditions);
 
@@ -100,6 +128,10 @@ async function findMany({ where, orderBy, skip, take }) {
     prisma.media.count({ where }),
   ]);
   return { records, total };
+}
+
+async function count(where) {
+  return prisma.media.count({ where });
 }
 
 async function findById(id) {
@@ -122,6 +154,7 @@ module.exports = {
   buildWhereClause,
   create,
   findMany,
+  count,
   findById,
   findByStoredFilename,
   update,

@@ -12,6 +12,7 @@ const swaggerUi = require('swagger-ui-express');
 const path = require('path');
 
 const mediaRoutes = require('./routes/media.routes');
+const mediaV2Routes = require('./routes/media.v2.routes');
 const healthRoutes = require('./routes/health.routes');
 const swaggerSpec = require('./config/swagger');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -128,6 +129,7 @@ function createApp() {
   // ── Routes ─────────────────────────────────────────────────────────────────
   app.use('/health', healthRoutes);
   app.use('/api/media', mediaRoutes);
+  app.use('/api/v2/media', mediaV2Routes);
 
   // ── OpenAPI / Swagger UI ───────────────────────────────────────────────────
   app.get('/openapi.json', (req, res) => res.json(swaggerSpec));

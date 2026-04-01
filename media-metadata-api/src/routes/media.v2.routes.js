@@ -127,7 +127,7 @@ router.post(
  *               properties:
  *                 count: { type: integer }
  */
-router.get('/count', validate(listQuerySchema, 'query'), controller.count);
+router.get('/count', controller.count);
 
 /**
  * @openapi
@@ -218,6 +218,13 @@ router.get('/', validate(listQuerySchema, 'query'), controller.list);
  *       404:
  *         description: Not found
  */
+router.param('id', (req, res, next, id) => {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
+  }
+  next();
+});
+
 router.get('/:id', controller.getById);
 
 /**

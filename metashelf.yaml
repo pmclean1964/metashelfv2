@@ -1,44 +1,12 @@
 services:
   api:
-    command: |
-      sh -c "
-        #!/bin/sh
-        set -e
-
-        # Install dependencies
-        apt-get update -qq && \
-        apt-get install -y --no-install-recommends curl unzip libssl-dev ca-certificates && \
-        update-ca-certificates && \
-        rm -rf /var/lib/apt/lists/*
-
-        # Prepare app source
-        rm -rf /app/src && mkdir -p /app/src && cd /tmp
-        curl -fL https://github.com/pmclean1964/metashelf/archive/refs/heads/main.zip -o metashelf.zip
-        unzip -o metashelf.zip
-        cp -r metashelf-main/media-metadata-api/. /app/src/
-
-        cd /app/src
-
-        # Fix validators
-        sed -i \"s/durationSeconds: Joi.number().positive().optional().allow(null)/durationSeconds: Joi.number().positive().optional().allow(null, '').empty('')/\" src/validators/media.validators.js
-        sed -i \"s/width: Joi.number().integer().positive().optional().allow(null)/width: Joi.number().integer().positive().optional().allow(null, '').empty('')/\" src/validators/media.validators.js
-        sed -i \"s/height: Joi.number().integer().positive().optional().allow(null)/height: Joi.number().integer().positive().optional().allow(null, '').empty('')/\" src/validators/media.validators.js
-
-        # Install Node dependencies and run Prisma migrations
-        npm install
-        npx prisma generate
-        npx prisma migrate deploy
-
-        # Start app
-        node src/index.js
-      "
+    command: ["sh", "-c", "apt-get update -qq && apt-get install -y --no-install-recommends curl unzip openssl ca-certificates && rm -rf /var/lib/apt/lists/* && cd /tmp && curl -fsSL https://github.com/pmclean1964/metashelfv2/archive/refs/heads/main.zip -o repo.zip && unzip -o repo.zip && cp -r metashelfv2-main/media-metadata-api/. /app/ && cd /app && npm ci --omit=dev && npx prisma generate && npx prisma migrate deploy && node src/index.js"]
     container_name: api
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: >-
-        postgresql://${POSTGRES_USER:-media_user}:${POSTGRES_PASSWORD:-media_pass}@db:5432/${POSTGRES_DB:-media_db}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-media_user}:${POSTGRES_PASSWORD:-media_pass}@db:5432/${POSTGRES_DB:-media_db}
       LOG_LEVEL: info
       NODE_ENV: production
       PORT: 3000
